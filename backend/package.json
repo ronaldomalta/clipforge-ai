@@ -1,5 +1,22 @@
 {
-  "name":"clipforge-backend","version":"0.2.0","private":true,"type":"commonjs",
-  "scripts":{"start":"node server.js","dev":"node --watch server.js","test":"node --check server.js"},
-  "dependencies":{"cors":"^2.8.6","dotenv":"^18.0.9","express":"^5.3.0","multer":"^2.0.2"}
+  "name": "clipforge-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "ClipForge AI local API: projects, queue, FFmpeg rendering and AI orchestration.",
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node --test --test-concurrency=1 \"tests/*.test.js\"",
+    "test:unit": "node --test tests/unit.test.js",
+    "check": "node --check src/index.js"
+  },
+  "dependencies": {
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "multer": "^2.0.2"
+  }
 }

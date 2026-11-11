@@ -1,1 +1,8 @@
+# Core analysis (required)
+numpy>=1.26,<3
+
+# Speech transcription + word timestamps (recommended; enables captions and speech analysis)
 faster-whisper>=1.1,<2
+
+# YouTube import
+yt-dlp>=2025.1.1
