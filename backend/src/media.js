@@ -177,7 +177,7 @@ async function makePreview(config, { source, target, signal }) {
     config.ffmpeg,
     ["-hide_banner", "-loglevel", "error", "-y", "-i", source,
       "-map", "0:v:0", "-map", "0:a?",
-      "-vf", "scale=-2:540,fps=30", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "28",
+      "-vf", "scale=-2:540,fps=30", "-c:v", "libx264", "-preset", "ultrafast", "-crf", "30",
       "-c:a", "aac", "-b:a", "96k", "-movflags", "+faststart", tmp],
     { timeout: 900000, signal }
   );

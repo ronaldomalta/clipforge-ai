@@ -1,0 +1,18 @@
+{
+  "name": "clipforge-ai",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Local AI clipping studio: turns long gaming streams into short, captioned clips.",
+  "scripts": {
+    "doctor": "node scripts/doctor.mjs",
+    "install:all": "npm --prefix backend install && npm --prefix frontend install",
+    "build": "npm --prefix frontend run build",
+    "start": "npm --prefix backend start",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "test": "npm --prefix backend test && npm --prefix frontend test",
+    "test:ai": "python -m pytest ai-service -q",
+    "lint": "npm --prefix frontend run lint"
+  },
+  "engines": { "node": ">=22.13.0" }
+}

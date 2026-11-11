@@ -38,5 +38,12 @@ module.exports = function mediaRoutes(s) {
   r.get("/media/thumbs/:file", serve("thumbs"));
   r.get("/media/captions/:file", serve("captions"));
   r.get("/clips/:file", serve("clips")); // legacy absolute URLs stored by v0.x
+  // Bundled OFL caption fonts (used by the editor's live caption preview).
+  r.get("/media/fonts/:file", (req, res) => {
+    const file = /\.(ttf|otf)$/i.test(req.params.file) ? resolveInside(config.fontsDir, req.params.file) : null;
+    if (!file || !fs.existsSync(file)) return res.status(404).json({ error: "Fonte não encontrada.", code: "NOT_FOUND" });
+    res.type("font/ttf");
+    res.sendFile(file, { headers: { "Cache-Control": "public, max-age=86400" } });
+  });
   return r;
 };

@@ -12,7 +12,7 @@ const STYLE_PRESETS = {
   neon: { highlight: true, outline: 4, shadow: 0, glow: true, box: false, scale: 1.0, bold: 0 },
   minimal: { highlight: false, outline: 0, shadow: 0, glow: false, box: true, scale: 0.72, bold: 0 },
 };
-const SIZE_PX = { S: 58, M: 72, L: 88, XL: 104 };
+const SIZE_PX = { S: 64, M: 80, L: 96, XL: 116 };
 
 function assColor(hex, alpha = 0) {
   const clean = /^#?[0-9a-fA-F]{6}$/.test(hex || "") ? hex.replace("#", "") : "FFFFFF";

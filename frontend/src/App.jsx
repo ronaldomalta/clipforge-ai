@@ -1,29 +1,122 @@
-import { useEffect, useState } from 'react';
-import './App.css';
-const API = 'http://localhost:3001';
-const nav = [{id:'dashboard',icon:'◈',label:'Dashboard'},{id:'create',icon:'✂',label:'Criar cortes'},{id:'library',icon:'▤',label:'Meus clipes'},{id:'live',icon:'◉',label:'Live AI'},{id:'settings',icon:'⚙',label:'Configurações'}];
-const clock = s => `${Math.floor(s/60).toString().padStart(2,'0')}:${Math.floor(s%60).toString().padStart(2,'0')}`;
-export default function App(){
- const [page,setPage]=useState('dashboard'),[source,setSource]=useState('file'),[url,setUrl]=useState(''),[file,setFile]=useState(null),[video,setVideo]=useState(null);
- const [count,setCount]=useState(5),[duration,setDuration]=useState(30),[vertical,setVertical]=useState(true),[smart,setSmart]=useState(true),[captions,setCaptions]=useState(true),[autoEdit,setAutoEdit]=useState(true);
- const [jobs,setJobs]=useState([]),[selected,setSelected]=useState(null),[busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState('');
-  const [keepIds,setKeepIds]=useState([]),[finalizing,setFinalizing]=useState(false);
- async function refresh(){try{const r=await fetch(`${API}/api/jobs`);if(r.ok){const data=await r.json();setJobs(data);setSelected(old=>old?data.find(j=>j.id===old.id)||old:null);}}catch{}}
- useEffect(()=>{refresh();const timer=setInterval(refresh,2500);return()=>clearInterval(timer);},[]);
- const allClips=jobs.flatMap(j=>(j.clips||[]).map(c=>({...c,sourceName:j.sourceName,jobId:j.id}))).reverse();
- const completed=jobs.filter(j=>j.status==='completed').length;
- async function analyze(){setError('');setVideo(null);if(!url.trim())return setError('Cole um link do YouTube.');setBusy(true);try{const r=await fetch(`${API}/api/videos/info`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url})});const d=await r.json();if(!r.ok)throw Error(d.error);setVideo(d);}catch(e){setError(e.message);}finally{setBusy(false);}}
- async function submit(e){e.preventDefault();setError('');setNotice('');if(source==='file'&&!file)return setError('Escolha uma gravação MP4 ou MKV.');if(source==='youtube'&&!url.trim())return setError('Cole a URL do YouTube.');setBusy(true);try{let r;const opts={count,duration,vertical,smart,captions,autoEdit};if(source==='file'){const form=new FormData();form.append('video',file);Object.entries(opts).forEach(([k,v])=>form.append(k,String(v)));r=await fetch(`${API}/api/jobs/upload`,{method:'POST',body:form});}else{r=await fetch(`${API}/api/jobs/youtube`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...opts,url})});}const d=await r.json();if(!r.ok)throw Error(d.error);setNotice('Projeto enviado para processamento!');setSelected(d);setPage('library');await refresh();}catch(e){setError(e.message||'Não foi possível iniciar o projeto.');}finally{setBusy(false);}}
- return <div className="app-shell"><aside className="sidebar"><div className="brand"><span className="brand-symbol">✦</span><div><strong>CLIPFORGE<span> AI</span></strong><small>VICE CITY STUDIO</small></div></div><div className="nav-caption">WORKSPACE</div><nav>{nav.map(item=><button key={item.id} className={page===item.id?'active':''} onClick={()=>{setPage(item.id);setError('');}}><span className="nav-icon">{item.icon}</span>{item.label}{item.id==='library'&&allClips.length>0&&<span className="nav-count">{allClips.length}</span>}</button>)}</nav><div className="sidebar-bottom"><div className="neon-card"><span>✦ LOCAL CREATOR</span><strong>Seu estúdio. Suas regras.</strong><p>IA local, exportação livre e zero marca-d'água.</p></div><div className="profile"><span className="profile-avatar">CF</span><div><strong>Meu workspace</strong><small>Windows • Local</small></div></div></div></aside>
- <main className="main"><header className="topbar"><div><span className="muted">WORKSPACE</span><span className="slash">/</span><strong>{nav.find(n=>n.id===page)?.label}</strong></div><div className="top-right"><span className="online"/> LOCAL STUDIO <span className="avatar">CF</span></div></header>
- <div className="content">{page==='dashboard'&&<><section className="hero"><div className="hero-text"><div className="eyebrow">✦ WELCOME TO THE NEXT LEVEL</div><h1>Transforme momentos<br/>em <em>conteúdo viral.</em></h1><p>Da sua live para o feed. Encontre, edite e exporte os melhores momentos de GTA e outros jogos, tudo no seu PC.</p><div className="hero-actions"><button className="primary" onClick={()=>setPage('create')}>✂ Criar meus cortes <span>↗</span></button><button className="ghost" onClick={()=>setPage('library')}>Ver biblioteca →</button></div></div><div className="hero-graphic"><div className="sun"/><div className="palm palm-left">✳</div><div className="palm palm-right">✳</div><div className="hero-glass">▶<span>AI CLIP ENGINE</span></div></div></section><div className="section-title"><div><span className="eyebrow">SEU ESTÚDIO</span><h2>Visão geral</h2></div><span className="chip">● BETA LOCAL</span></div><div className="stats"><div className="stat"><span>PROJETOS</span><strong>{jobs.length}</strong><small>Processamentos registrados</small></div><div className="stat"><span>CLIPES GERADOS</span><strong>{allClips.length}</strong><small>Prontos para postar</small></div><div className="stat"><span>CONCLUÍDOS</span><strong>{completed}</strong><small>Projetos finalizados</small></div><div className="stat"><span>EM ANDAMENTO</span><strong>{jobs.filter(j=>['queued','running'].includes(j.status)).length}</strong><small>Na fila ou renderizando</small></div></div><div className="two-col"><div className="panel"><h3>✦ Comece a criar</h3><p>Importe uma gravação do TikTok LIVE Studio ou use um link do YouTube.</p><button className="secondary" onClick={()=>setPage('create')}>Novo projeto ↗</button></div><div className="panel"><h3>◉ Gaming Highlights</h3><p>Transcrição com Whisper, momentos sugeridos e edição automática no estilo Viral TikTok.</p><span className="hint">A seleção por IA requer instalação do faster-whisper.</span></div></div></>}
- {page==='create'&&<><div className="page-heading"><div><span className="eyebrow">AI VIDEO WORKFLOW</span><h1>Criar cortes <em>incríveis.</em></h1><p>Transforme um vídeo longo em até 10 clipes prontos para redes sociais.</p></div></div><form onSubmit={submit} className="create-grid"><div className="panel upload-panel"><h3>01 / Fonte do vídeo</h3><div className="tabs"><button type="button" className={source==='file'?'selected':''} onClick={()=>setSource('file')}>▣ Arquivo local</button><button type="button" className={source==='youtube'?'selected':''} onClick={()=>setSource('youtube')}>▶ YouTube</button></div>{source==='file'?<label className="dropzone"><input type="file" accept=".mp4,.mkv,.mov,.webm,.avi" onChange={e=>setFile(e.target.files?.[0]||null)}/><span className="drop-icon">⇧</span><strong>{file?file.name:'Escolha sua gravação'}</strong><small>{file?`${(file.size/1024**3).toFixed(2)} GB selecionados`:'MP4, MKV, MOV, WEBM ou AVI • até 20 GB'}</small><span className="fake-button">Selecionar arquivo</span></label>:<div className="url-box"><label>URL DO VÍDEO</label><input type="url" placeholder="https://www.youtube.com/watch?v=..." value={url} onChange={e=>{setUrl(e.target.value);setVideo(null);}}/><button type="button" className="secondary" onClick={analyze} disabled={busy}>{busy?'Analisando...':'Analisar vídeo'}</button>{video&&<div className="video-info">{video.thumbnail&&<img src={video.thumbnail} alt="Thumbnail"/>}<div><strong>{video.title}</strong><small>{video.uploader} • {clock(video.duration||0)}</small></div></div>}</div>}<div className="info-box">Gravações de 3–4 horas são processadas em segundo plano. A gravação original do seu computador não é apagada.</div></div><div className="panel settings-panel"><h3>02 / Configurar geração</h3><label>QUANTIDADE DE CLIPES <strong>{count}</strong></label><input type="range" min="1" max="10" value={count} onChange={e=>setCount(Number(e.target.value))}/><label>DURAÇÃO DOS CLIPES</label><div className="duration-options">{[15,30,45,60,90].map(n=><button type="button" key={n} className={duration===n?'selected':''} onClick={()=>setDuration(n)}>{n}s</button>)}</div><div className="toggles"><label><span><strong>Formato vertical 9:16</strong><small>Otimizado para TikTok e Reels</small></span><input type="checkbox" checked={vertical} onChange={e=>setVertical(e.target.checked)}/></label><label><span><strong>Seleção inteligente</strong><small>Whisper + análise de transcrição</small></span><input type="checkbox" checked={smart} onChange={e=>setSmart(e.target.checked)}/></label><label><span><strong>Legendas automáticas</strong><small>Requer faster-whisper instalado</small></span><input type="checkbox" checked={captions} onChange={e=>setCaptions(e.target.checked)}/></label><label><span><strong>Auto Editor · Viral TikTok</strong><small>Ajuste de contraste e saturação (V1)</small></span><input type="checkbox" checked={autoEdit} onChange={e=>setAutoEdit(e.target.checked)}/></label></div><button type="submit" className="primary generate" disabled={busy}>{busy?'Enviando arquivo...':'✦ Gerar clipes agora →'}</button></div></form></>}
- {page==='library'&&<><div className="page-heading"><span className="eyebrow">YOUR CONTENT LIBRARY</span><h1>Meus <em>clipes.</em></h1><p>Acompanhe seus projetos e baixe os vídeos gerados.</p></div>{jobs.length===0?<div className="empty panel"><span>✂</span><h3>Nenhum clipe ainda</h3><p>Crie seu primeiro projeto para ver os resultados aqui.</p><button className="primary" onClick={()=>setPage('create')}>Criar projeto</button></div>:<><div className="job-list">{jobs.map(j=><button key={j.id} className={`job-row ${selected?.id===j.id?'chosen':''}`} onClick={()=>{setSelected(j);setKeepIds((j.clips||[]).map(c=>c.id));}}><span className="job-icon">▣</span><span className="job-name"><strong>{j.sourceName}</strong><small>{new Date(j.createdAt).toLocaleString('pt-BR')}</small></span><span className={`status ${j.status}`}>{j.status==='completed'?'Concluído':j.status==='running'?'Processando':j.status==='queued'?'Na fila':j.status==='failed'?'Falhou':'Interrompido'}</span><span className="job-percent">{j.progress}%</span></button>)}</div>{selected&&<div className="panel detail"><h3>{selected.sourceName}</h3><p>{selected.step}</p><div className="progress-track"><div style={{width:`${selected.progress}%`}}/></div>{selected.error&&<p className="error">{selected.error}</p>}{selected.analysis?.warning&&<p className="hint">{selected.analysis.warning}</p>}{selected.status==='completed'&&(selected.clips||[]).length>0&&<div className="review-bar">
-    <div><strong>{selected.reviewedAt?'✓ Seleção finalizada':'Revisar cortes'}</strong><small>{selected.reviewedAt?'Clipes aprovados e salvos':`${keepIds.filter(id=>(selected.clips||[]).some(c=>c.id===id)).length} de ${selected.clips.length} selecionados`}</small></div>
-    {!selected.reviewedAt&&<div className="review-actions"><button type="button" className="secondary" onClick={()=>setKeepIds(selected.clips.map(c=>c.id))}>Selecionar todos</button><button type="button" className="secondary" onClick={()=>setKeepIds([])}>Desmarcar todos</button><button type="button" className="primary" disabled={finalizing} onClick={finalizeSelection}>{finalizing?'Finalizando...':'✓ Finalizar seleção'}</button></div>}
-  </div>}
-  <div className="clip-grid">{(selected.clips||[]).map(c=><div className={`clip-card ${!selected.reviewedAt&&keepIds.includes(c.id)?'clip-approved':''}`} key={c.id}><video src={c.url} controls preload="metadata"/><div className="clip-info">{selected.status==='completed'&&!selected.reviewedAt&&<label className="clip-check"><input type="checkbox" checked={keepIds.includes(c.id)} onChange={e=>setKeepIds(old=>e.target.checked?[...new Set([...old,c.id])]:old.filter(id=>id!==c.id))}/><span>{keepIds.includes(c.id)?'Manter este clipe':'Descartar este clipe'}</span></label>}<strong>{c.title}</strong><small>Início {clock(c.start)} • {c.duration}s {c.score!=null?`• Nota heurística ${c.score}/100`:''}</small><a href={c.url} download={c.filename} target="_blank" rel="noreferrer">↓ Baixar MP4</a></div></div>)}</div></div>}</>}</>}
- {page==='live'&&<div className="page-heading"><span className="eyebrow">LIVE TO CLIPS</span><h1>Live <em>AI.</em></h1><p>Prepare seus melhores momentos depois da transmissão.</p><div className="panel feature"><h3>◉ TikTok LIVE Studio → ClipForge</h3><p>Ao terminar a live, selecione o arquivo de gravação salvo pelo TikTok LIVE Studio. O ClipForge processa o vídeo em segundo plano, gera cortes e mantém os resultados na biblioteca.</p><button className="primary" onClick={()=>{setSource('file');setPage('create');}}>Importar gravação ↗</button><p className="hint">Captura em tempo real e publicação automática não estão incluídas nesta versão.</p></div></div>}
- {page==='settings'&&<div className="page-heading"><span className="eyebrow">LOCAL CONFIGURATION</span><h1>Configurações <em>do estúdio.</em></h1><div className="panel feature"><h3>Processamento local</h3><p>Backend: {API}</p><p>Arquivos gerados: <code>storage/clips</code></p><p>IA: faster-whisper opcional, executado em CPU para compatibilidade inicial.</p><p>Modelo: definido em <code>WHISPER_MODEL</code> no backend.</p><p>O Auto Editor V1 ajusta cor e enquadramento; zoom dinâmico e remoção de silêncios ainda estão planejados.</p></div></div>}
- {(error||notice)&&<div className={`toast ${error?'toast-error':''}`}>{error||notice}<button onClick={()=>{setError('');setNotice('');}}>×</button></div>}</div></main></div>;
+import { useEffect, useState } from 'react'
+import './App.css'
+import { api } from './api'
+import { useHashRoute } from './hooks'
+import { FeedbackProvider } from './components/Feedback'
+import Dashboard from './pages/Dashboard'
+import CreatePage from './pages/CreatePage'
+import LibraryPage from './pages/LibraryPage'
+import EditorPage from './pages/EditorPage'
+import LivePage from './pages/LivePage'
+import SettingsPage from './pages/SettingsPage'
+
+export const NAV = [
+  { id: 'dashboard', icon: '◈', label: 'Dashboard' },
+  { id: 'create', icon: '✂', label: 'Criar cortes' },
+  { id: 'library', icon: '▤', label: 'Meus clipes' },
+  { id: 'editor', icon: '✎', label: 'Editor' },
+  { id: 'live', icon: '◉', label: 'Live AI' },
+  { id: 'settings', icon: '⚙', label: 'Configurações' },
+]
+
+function Shell() {
+  const [route, navigate] = useHashRoute()
+  const [online, setOnline] = useState(null)
+  const [pending, setPending] = useState(0)
+
+  useEffect(() => {
+    let alive = true
+    const check = async () => {
+      try {
+        const h = await api('/api/health')
+        if (!alive) return
+        setOnline(true)
+        setPending((h.queue?.running || 0) + (h.queue?.queued || 0))
+      } catch {
+        if (alive) setOnline(false)
+      }
+    }
+    check()
+    const t = setInterval(check, 5000)
+    return () => {
+      alive = false
+      clearInterval(t)
+    }
+  }, [])
+
+  const page = NAV.some((n) => n.id === route.page) ? route.page : 'dashboard'
+  const current = NAV.find((n) => n.id === page)
+
+  return (
+    <div className="app-shell">
+      <aside className="sidebar">
+        <div className="brand">
+          <span className="brand-symbol">✦</span>
+          <div>
+            <strong>CLIPFORGE<span> AI</span></strong>
+            <small>VICE CITY STUDIO</small>
+          </div>
+        </div>
+        <div className="nav-caption">WORKSPACE</div>
+        <nav aria-label="Navegação principal">
+          {NAV.map((item) => (
+            <button key={item.id} type="button" className={page === item.id ? 'active' : ''} aria-current={page === item.id ? 'page' : undefined} onClick={() => navigate(item.id)}>
+              <span className="nav-icon" aria-hidden>{item.icon}</span>
+              {item.label}
+              {item.id === 'library' && pending > 0 && <span className="nav-count" title="Tarefas em andamento">{pending}</span>}
+            </button>
+          ))}
+        </nav>
+        <div className="sidebar-bottom">
+          <div className="neon-card">
+            <span>✦ LOCAL CREATOR</span>
+            <strong>Seu estúdio. Suas regras.</strong>
+            <p>IA local, exportação livre e zero marca-d'água.</p>
+          </div>
+          <div className="profile">
+            <span className="profile-avatar">CF</span>
+            <div>
+              <strong>Meu workspace</strong>
+              <small>Windows • Local</small>
+            </div>
+          </div>
+        </div>
+      </aside>
+      <main className="main">
+        <header className="topbar">
+          <div>
+            <span className="muted">WORKSPACE</span>
+            <span className="slash">/</span>
+            <strong>{current?.label}</strong>
+          </div>
+          <div className="top-right">
+            <span className={`online ${online === false ? 'offline' : ''}`} />
+            {online === false ? 'SERVIDOR OFFLINE' : 'LOCAL STUDIO'}
+            <span className="avatar">CF</span>
+          </div>
+        </header>
+        {online === false && (
+          <div className="offline-banner" role="alert">
+            O servidor local não está respondendo. Abra o ClipForge pelo <code>start-clipforge.bat</code> (ou rode <code>npm start</code> em <code>backend</code>).
+          </div>
+        )}
+        <div className="content">
+          {page === 'dashboard' && <Dashboard navigate={navigate} />}
+          {page === 'create' && <CreatePage navigate={navigate} />}
+          {page === 'library' && <LibraryPage navigate={navigate} projectId={route.param} />}
+          {page === 'editor' && <EditorPage navigate={navigate} clipId={route.param} />}
+          {page === 'live' && <LivePage navigate={navigate} />}
+          {page === 'settings' && <SettingsPage />}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+export default function App() {
+  return (
+    <FeedbackProvider>
+      <Shell />
+    </FeedbackProvider>
+  )
 }
