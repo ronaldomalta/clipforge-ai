@@ -1,32 +1,9 @@
-# Dependencies
 node_modules/
-**/node_modules/
-
-# Environment variables
 .env
-**/.env
 .env.*
-**/.env.*
 !.env.example
-!**/.env.example
-
-# Generated videos
 storage/
-*.mp4
-*.webm
-*.mkv
-
-# Build
-dist/
-**/dist/
-
-# Logs
-*.log
-
-# Python
+frontend/dist/
 __pycache__/
-.venv/
-venv/
-
-# Editor
-.vscode/
+*.pyc
+.DS_Store
