@@ -26,3 +26,4 @@ if errorlevel 1 (
   echo [X] O servidor parou com erro. Rode: node scripts\doctor.mjs
   pause
 )
+
